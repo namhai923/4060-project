@@ -24,7 +24,7 @@ import TopicClient from '../client-app/TopicClient'
 enum PromptOptions {
   CreateConnection    = 'Connect to Broker',
   CreateTopic         = 'Create new topic',
-  PublishToTopic      = "Publish to topic",
+  EditTopic           = "Edit topic",
   SubscribeToTopic    = "Subscribe to topic",
   QueryTopic          = 'Query topic',
   QueryAllTopics      = 'Query all subscribed topics',
@@ -83,7 +83,7 @@ export class ClientInquirer extends BaseInquirer {
   private async getPromptChoice() {
     if (this.clientAgent.connected) {
       const connectedOptions = [PromptOptions.CreateTopic, 
-                                PromptOptions.PublishToTopic,
+                                PromptOptions.EditTopic,
                                 PromptOptions.SubscribeToTopic,
                                 PromptOptions.QueryTopic,
                                 PromptOptions.QueryAllTopics,
@@ -110,8 +110,8 @@ export class ClientInquirer extends BaseInquirer {
       case PromptOptions.CreateTopic:
         await this.createTopic()
         break
-      case PromptOptions.PublishToTopic:
-        await this.publishToTopic()
+      case PromptOptions.EditTopic:
+        await this.editTopic()
         break
       case PromptOptions.SubscribeToTopic:
         await this.subscribeToTopic()
@@ -220,12 +220,10 @@ export class ClientInquirer extends BaseInquirer {
   /**
    * This function will sent data to Broker server to modify an existed topic on Broker's ledger
    */
-  public async publishToTopic() {
-    const topicNumber = (await inquirer.prompt([this.inquireInput(Title.TopicNumberTitle)])).input
-    const message = (await inquirer.prompt([this.inquireInput(Title.MessageDetailsTitle)])).input
-    const reqBody = { topicNumber, message}
+  public async editTopic() {
+    let reqBody = this.getTopicDetails()
 
-    let response = await this.clientApi.publishToTopic(await this.addAuthInfo(reqBody))
+    let response = await this.clientApi.editTopic(await this.addAuthInfo(reqBody))
     console.log(greenText(response.message))
   }
 

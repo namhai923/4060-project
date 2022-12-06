@@ -129,9 +129,9 @@ class TopicClient {
    * @param {*} args data that is needed for modifying an existed topic on Broker's ledger
    * @returns response message from Broker server
    */
-  async publishToTopic(args) {
+  async editTopic(args) {
     try {  
-      let response = await brokerApi.publishToTopic(args);  
+      let response = await brokerApi.editTopic(args);  
       return response;
     }
     catch (err) {
