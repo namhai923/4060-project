@@ -2,7 +2,7 @@
 
 const axios = require('axios');
 
-let brokerServer = '34.148.224.202';
+let brokerServer = '34.125.24.52';
 let brokerPort = '3000';
 
 let axiosClient = axios.create({

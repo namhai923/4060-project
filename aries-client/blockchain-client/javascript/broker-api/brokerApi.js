@@ -9,9 +9,9 @@ let brokerApi = {
     let url = '/queryTopic';
     return axiosClient.post(url, {topicNumber, clientDid, clientThreadId});
   },
-  createTopic: ({topicNumber, topicName, message, clientDid, clientThreadId}) => {
+  createTopic: ({topicNumber, topicName, message, mode, clientDid, clientThreadId}) => {
     let url = '/createTopic';
-    return axiosClient.post(url, {topicNumber, topicName, message, clientDid, clientThreadId});
+    return axiosClient.post(url, {topicNumber, topicName, message, mode, clientDid, clientThreadId});
   },
   publishToTopic: ({topicNumber, message, clientDid, clientThreadId}) => {
     let url = '/publishToTopic';

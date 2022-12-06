@@ -5,7 +5,6 @@
 import {
   ConnectionRecord,
   ConnectionStateChangedEvent,
-  CredentialExchangeRecord,
   ProofRecord,
   ConnectionEventTypes,
 } from '@aries-framework/core'

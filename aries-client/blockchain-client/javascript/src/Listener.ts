@@ -51,7 +51,7 @@ export class Listener {
       const attribute = credentialRecord.credentialAttributes
       console.log('\n\nCredential preview:')
       attribute.forEach((element) => {
-        console.log(purpleText(`${element.name} ${Color.Reset}${element.value}`))
+        console.log(purpleText(`${element.name}: ${Color.Reset}${element.value}`))
       })
     }
   }
