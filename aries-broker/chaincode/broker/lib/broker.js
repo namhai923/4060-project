@@ -36,20 +36,22 @@ class Broker extends Contract {
         return { message: `${topicNumber} is created` };
     }
 
-    // Publish to a topic by updating the message and notifying all subscribers.
-    async publishToTopic(ctx, topicNumber, newMessage) {
-        console.info('============= START : Publish to a Topic ===========');
+    // Edit a topic on the ledger.
+    async editTopic(ctx, topicNumber, newTopicName, newMessage, newMode) {
+        console.info('============= START : Edit a Topic ===========');
 
         const topicAsBytes = await ctx.stub.getState(topicNumber); // get the topic from chaincode state
         if (!topicAsBytes || topicAsBytes.length === 0) {
             return { message: `${topicNumber} does not exist` };
         }
         const topic = JSON.parse(topicAsBytes.toString());
+        topic.topicName = newTopicName;
         topic.message = newMessage;
+        topic.mode = newMode;
 
-        await ctx.stub.putState(topicNumber, Buffer.from(JSON.stringify(topic))); // update topic message on ledger
+        await ctx.stub.putState(topicNumber, Buffer.from(JSON.stringify(topic))); // update topic on ledger
 
-        console.info('============= END : Publish to a Topic ===========');
+        console.info('============= END : Edit a Topic ===========');
         return { message: `${topicNumber} is updated` };
     }
 

@@ -246,7 +246,7 @@ app.post('/createTopic', async function (req, res) {
 /**
  * This function will let client modify an existed topic in HF ledger
  */
-app.post('/publishToTopic', async function (req, res) {
+app.post('/editTopic', async function (req, res) {
   try {
 
     let { topicNumber, message: newMessage, clientDid, clientThreadId } = req.body
@@ -264,12 +264,12 @@ app.post('/publishToTopic', async function (req, res) {
         // check whether the client is permitted to modify the topic or not
         await brokerAgent.setCurrCredFromThread(clientThreadId)
         if (brokerAgent.checkTopics(topicNumber, true)) {
-          let result = await contract.submitTransaction('publishToTopic', topicNumber, newMessage)
+          let result = await contract.submitTransaction('editTopic', topicNumber, newMessage)
           let resultJSON = JSON.parse(result.toString())
           response = resultJSON.message
         }
         else {
-          response = 'The agent is not permitted to publish to this topic'
+          response = 'The agent is not permitted to edit this topic'
         }
       }
     })
@@ -278,7 +278,7 @@ app.post('/publishToTopic', async function (req, res) {
 
   }
   catch (error) {
-    res.status(500).json({ errorMessage: `Failed to publish to topic: ${error}` })
+    res.status(500).json({ errorMessage: `Failed to edit topic: ${error}` })
   }
   finally {
     // Disconnect from the HF gateway.
@@ -325,7 +325,7 @@ app.post('/subscribeToTopic', async function (req, res) {
     res.status(200).json({ message: authMessage ? authMessage : response })
   }
   catch (error) {
-    res.status(500).json({ errorMessage: `Failed to publish to topic: ${error}` })
+    res.status(500).json({ errorMessage: `Failed to subscribe to topic: ${error}` })
   }
   finally {
     // Disconnect from the HF gateway.
