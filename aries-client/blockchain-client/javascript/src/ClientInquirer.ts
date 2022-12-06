@@ -22,15 +22,15 @@ import TopicClient from '../client-app/TopicClient'
  * List of actions to interact with Broker's ledger
  */
 enum PromptOptions {
-  CreateConnection = 'Connect to Broker',
-  CreateTopic = 'Create new topic',
-  PublishToTopic = "Publish to topic",
-  SubscribeToTopic = "Subscribe to topic",
-  QueryTopic = 'Query topic',
-  QueryAllTopics = 'Query all topics',
-  QueryCreatedTopics = 'Query all created topics',
-  Exit = 'Exit',
-  ClearAll = 'Clear all credentials and connections',
+  CreateConnection    = 'Connect to Broker',
+  CreateTopic         = 'Create new topic',
+  PublishToTopic      = "Publish to topic",
+  SubscribeToTopic    = "Subscribe to topic",
+  QueryTopic          = 'Query topic',
+  QueryAllTopics      = 'Query all subscribed topics',
+  QueryCreatedTopics  = 'Query all created topics',
+  Exit                = 'Exit',
+  ClearAll            = 'Clear all credentials and connections',
 }
 
 /**
@@ -88,8 +88,7 @@ export class ClientInquirer extends BaseInquirer {
                                 PromptOptions.QueryTopic,
                                 PromptOptions.QueryAllTopics,
                                 PromptOptions.QueryCreatedTopics,
-                                PromptOptions.Exit, 
-                                PromptOptions.ClearAll]
+                                PromptOptions.Exit]
       return await inquirer.prompt([this.inquireOptions(connectedOptions)])
     }
 
@@ -194,11 +193,18 @@ export class ClientInquirer extends BaseInquirer {
    * @returns {any} new topic's data
    */
   public async getTopicDetails() {
+    let mode;
     const topicNumber = (await inquirer.prompt([this.inquireInput(Title.TopicNumberTitle)])).input
     const topicName = (await inquirer.prompt([this.inquireInput(Title.TopicNameTitle)])).input
     const message = (await inquirer.prompt([this.inquireInput(Title.MessageDetailsTitle)])).input
+    const confirm = await inquirer.prompt([this.inquireConfirmation('Do you want to make this topic public?')])
+    if (confirm.options === ConfirmOptions.Yes) {
+      mode = 'public'
+    } else {
+      mode = 'private'
+    }
 
-    return { topicNumber, topicName, message }
+    return { topicNumber, topicName, message, mode }
   }
 
   /**
