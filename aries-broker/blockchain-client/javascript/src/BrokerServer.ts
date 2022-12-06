@@ -216,11 +216,11 @@ app.post('/queryTopic', async function (req, res) {
 app.post('/createTopic', async function (req, res) {
   try {
 
-    let { topicNumber, topicName, message, clientDid, clientThreadId } = req.body
+    let { topicNumber, topicName, message, mode, clientDid, clientThreadId } = req.body
     let response
 
     let authMessage = await auth(clientDid, async () => {
-      let result = await contract.submitTransaction('createTopic', topicNumber, topicName, message)
+      let result = await contract.submitTransaction('createTopic', topicNumber, topicName, message, mode)
       let resultJSON = JSON.parse(result.toString())
 
       // give client a new credential if the topic is successfully created
@@ -304,15 +304,20 @@ app.post('/subscribeToTopic', async function (req, res) {
         response = resultJSON.message
       }
       else {
-        // if the client is not permitted to read the topic then give them the permission
-        await brokerAgent.setCurrCredFromThread(clientThreadId)
-        if(!brokerAgent.checkTopics(topicNumber, false)) {
-          await brokerAgent.sendMessage('Issuing new Credentials...')
-          await brokerAgent.issueCredential(topicNumber, false)
-          response = `Successfully subscribe to ${topicNumber}`
-        }
-        else {
-          response = `Already subscribe to ${topicNumber}`
+        if (resultJSON.mode === 'private') {
+          response = `${topicNumber} is private`
+        } else {
+
+          // if the client is not permitted to read the topic then give them the permission
+          await brokerAgent.setCurrCredFromThread(clientThreadId)
+          if(!brokerAgent.checkTopics(topicNumber, false)) {
+            await brokerAgent.sendMessage('Issuing new Credentials...')
+            await brokerAgent.issueCredential(topicNumber, false)
+            response = `Successfully subscribe to ${topicNumber}`
+          }
+          else {
+            response = `Already subscribe to ${topicNumber}`
+          }
         }
       }
     })
