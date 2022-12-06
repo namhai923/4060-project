@@ -93,7 +93,7 @@ export class BrokerAgent extends BaseAgent {
     const schemaTemplate = {
       name: `BrokerAgent(${utils.uuid()})`,
       version: '1.0.0',
-      attributes: ['id', 'publishedTopics', 'subscribedTopics'],
+      attributes: ['id', 'createdTopics', 'subscribedTopics'],
     }
     this.printSchema(schemaTemplate)
     const schema = await this.agent.ledger.registerSchema(schemaTemplate)
@@ -136,38 +136,38 @@ export class BrokerAgent extends BaseAgent {
    * @returns {V1CredentialPreview} new credential that will be offered to client
    */
   private getCredentialPreview(newTopic?: string, create?: boolean) {
-    let currId, currPubTopics, currSubTopics
+    let currId, currCreatedTopics, currSubscribedTopics
 
     // check whether client already has credential or not
     if (this.currentCredRecord?.credentialAttributes && newTopic) {
       currId = this.currentCredRecord.credentialAttributes[0].value
-      currPubTopics = this.currentCredRecord.credentialAttributes[1].value
-      currSubTopics = this.currentCredRecord.credentialAttributes[2].value
+      currCreatedTopics = this.currentCredRecord.credentialAttributes[1].value
+      currSubscribedTopics = this.currentCredRecord.credentialAttributes[2].value
 
       // add new topic to client's list of subscribed topics
       if (this.currentCredRecord.credentialAttributes[2].value !== '')
-        currSubTopics = this.currentCredRecord.credentialAttributes[2].value + ',' + newTopic
+        currSubscribedTopics = this.currentCredRecord.credentialAttributes[2].value + ',' + newTopic
       else
-        currSubTopics = newTopic
+        currSubscribedTopics = newTopic
 
       // add new topic to client's list of created topics
       if (create) {
         if (this.currentCredRecord.credentialAttributes[1].value !== '')
-          currPubTopics = this.currentCredRecord.credentialAttributes[1].value + ',' + newTopic
+          currCreatedTopics = this.currentCredRecord.credentialAttributes[1].value + ',' + newTopic
         else
-          currPubTopics = newTopic
+          currCreatedTopics = newTopic
       }
     }
     else {
       currId = utils.uuid()
-      currPubTopics = ''
-      currSubTopics = ''
+      currCreatedTopics = ''
+      currSubscribedTopics = ''
     }
 
     const credentialPreview = V1CredentialPreview.fromRecord({
       id: currId,
-      publishedTopics: currPubTopics,
-      subscribedTopics: currSubTopics
+      createdTopics: currCreatedTopics,
+      subscribedTopics: currSubscribedTopics
     })
     return credentialPreview
   }
