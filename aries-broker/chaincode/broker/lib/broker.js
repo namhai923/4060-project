@@ -16,7 +16,7 @@ class Broker extends Contract {
     }
 
     // Create a new topic with the provided information and put it on the ledger.
-    async createTopic(ctx, topicNumber, topicName, message) {
+    async createTopic(ctx, topicNumber, topicName, message, mode) {
         console.info('============= START : Create Topic ===========');
 
         const topicAsBytes = await ctx.stub.getState(topicNumber); // get the topic from chaincode state
@@ -27,7 +27,8 @@ class Broker extends Contract {
         let topic = {
             docType: 'topic',
             topicName,
-            message
+            message,
+            mode
         }
 
         await ctx.stub.putState(topicNumber, Buffer.from(JSON.stringify(topic)));
