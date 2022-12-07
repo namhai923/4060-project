@@ -37,7 +37,7 @@ class Broker extends Contract {
     }
 
     // Edit a topic on the ledger.
-    async editTopic(ctx, topicNumber, newTopicName, newMessage, newMode) {
+    async editTopic(ctx, topicNumber, editValue, editType) {
         console.info('============= START : Edit a Topic ===========');
 
         const topicAsBytes = await ctx.stub.getState(topicNumber); // get the topic from chaincode state
@@ -45,9 +45,13 @@ class Broker extends Contract {
             return { message: `${topicNumber} does not exist` };
         }
         const topic = JSON.parse(topicAsBytes.toString());
-        topic.topicName = newTopicName;
-        topic.message = newMessage;
-        topic.mode = newMode
+        if (editType === 'name') {
+            topic.topicName = editValue;
+        } else if (editType === 'message') {
+            topic.message = editValue;
+        } else if (editType === 'mode') {
+            topic.mode = editValue
+        }
 
         await ctx.stub.putState(topicNumber, Buffer.from(JSON.stringify(topic))); // update topic on ledger
 

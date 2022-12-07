@@ -249,7 +249,7 @@ app.post('/createTopic', async function (req, res) {
 app.post('/editTopic', async function (req, res) {
   try {
 
-    let { topicNumber, topicName, message, mode, clientDid, clientThreadId } = req.body
+    let { topicNumber, editValue, editType, clientDid, clientThreadId } = req.body
     let response
 
     let authMessage = await auth(clientDid, async () => {
@@ -264,7 +264,7 @@ app.post('/editTopic', async function (req, res) {
         // check whether the client is permitted to modify the topic or not
         await brokerAgent.setCurrCredFromThread(clientThreadId)
         if (brokerAgent.checkTopics(topicNumber, true)) {
-          let result = await contract.submitTransaction('editTopic', topicNumber, topicName, message, mode)
+          let result = await contract.submitTransaction('editTopic', topicNumber, editValue, editType)
           let resultJSON = JSON.parse(result.toString())
           response = resultJSON.message
         }
@@ -289,7 +289,7 @@ app.post('/editTopic', async function (req, res) {
 /**
  * This function will give client permission to read an existed topic in HF ledger
  */
-app.post('/subscribeToTopic', async function (req, res) {
+app.post('/subscribeTopic', async function (req, res) {
   try {
 
     let { topicNumber, clientDid, clientThreadId } = req.body
