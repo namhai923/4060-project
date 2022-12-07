@@ -249,7 +249,7 @@ app.post('/createTopic', async function (req, res) {
 app.post('/editTopic', async function (req, res) {
   try {
 
-    let { topicNumber, message: newMessage, clientDid, clientThreadId } = req.body
+    let { topicNumber, topicName, message, mode, clientDid, clientThreadId } = req.body
     let response
 
     let authMessage = await auth(clientDid, async () => {
@@ -264,7 +264,7 @@ app.post('/editTopic', async function (req, res) {
         // check whether the client is permitted to modify the topic or not
         await brokerAgent.setCurrCredFromThread(clientThreadId)
         if (brokerAgent.checkTopics(topicNumber, true)) {
-          let result = await contract.submitTransaction('editTopic', topicNumber, newMessage)
+          let result = await contract.submitTransaction('editTopic', topicNumber, topicName, message, mode)
           let resultJSON = JSON.parse(result.toString())
           response = resultJSON.message
         }
@@ -304,20 +304,19 @@ app.post('/subscribeToTopic', async function (req, res) {
         response = resultJSON.message
       }
       else {
-        if (resultJSON.mode === 'private') {
-          response = `${topicNumber} is private`
-        } else {
-
-          // if the client is not permitted to read the topic then give them the permission
-          await brokerAgent.setCurrCredFromThread(clientThreadId)
-          if(!brokerAgent.checkTopics(topicNumber, false)) {
+        // if the client is not permitted to read the topic then give them the permission
+        await brokerAgent.setCurrCredFromThread(clientThreadId)
+        if (!brokerAgent.checkTopics(topicNumber, false)) {
+          if (resultJSON.mode === 'private') {
+            response = `${topicNumber} is private`
+          } else {
             await brokerAgent.sendMessage('Issuing new Credentials...')
             await brokerAgent.issueCredential(topicNumber, false)
             response = `Successfully subscribe to ${topicNumber}`
           }
-          else {
-            response = `Already subscribe to ${topicNumber}`
-          }
+        }
+        else {
+          response = `Already subscribe to ${topicNumber}`
         }
       }
     })

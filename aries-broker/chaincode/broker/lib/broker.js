@@ -47,7 +47,7 @@ class Broker extends Contract {
         const topic = JSON.parse(topicAsBytes.toString());
         topic.topicName = newTopicName;
         topic.message = newMessage;
-        topic.mode = newMode;
+        topic.mode = newMode
 
         await ctx.stub.putState(topicNumber, Buffer.from(JSON.stringify(topic))); // update topic on ledger
 
