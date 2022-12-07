@@ -145,9 +145,9 @@ class TopicClient {
    * @param {*} args data that is needed for subscribing to an existed topic on Broker's ledger
    * @returns response message from Broker server
    */
-  async subscribeToTopic(args) {
+  async subscribeTopic(args) {
     try {
-      let response = await brokerApi.subscribeToTopic(args)
+      let response = await brokerApi.subscribeTopic(args)
       return response;
     }
     catch (err) {

@@ -24,8 +24,10 @@ import TopicClient from '../client-app/TopicClient'
 enum PromptOptions {
   CreateConnection    = 'Connect to Broker',
   CreateTopic         = 'Create new topic',
-  EditTopic           = "Edit topic",
-  SubscribeToTopic    = "Subscribe to topic",
+  EditTopicName       = "Change topic name",
+  EditTopicMessage    = "Change topic message",
+  EditTopicMode       = "Change topic mode",
+  SubscribeTopic      = "Subscribe to topic",
   QueryTopic          = 'Query topic',
   QueryAllTopics      = 'Query all subscribed topics',
   QueryCreatedTopics  = 'Query all created topics',
@@ -83,8 +85,10 @@ export class ClientInquirer extends BaseInquirer {
   private async getPromptChoice() {
     if (this.clientAgent.connected) {
       const connectedOptions = [PromptOptions.CreateTopic, 
-                                PromptOptions.EditTopic,
-                                PromptOptions.SubscribeToTopic,
+                                PromptOptions.EditTopicName,
+                                PromptOptions.EditTopicMessage,
+                                PromptOptions.EditTopicMode,
+                                PromptOptions.SubscribeTopic,
                                 PromptOptions.QueryTopic,
                                 PromptOptions.QueryAllTopics,
                                 PromptOptions.QueryCreatedTopics,
@@ -110,11 +114,17 @@ export class ClientInquirer extends BaseInquirer {
       case PromptOptions.CreateTopic:
         await this.createTopic()
         break
-      case PromptOptions.EditTopic:
-        await this.editTopic()
+      case PromptOptions.EditTopicName:
+        await this.editTopicName()
         break
-      case PromptOptions.SubscribeToTopic:
-        await this.subscribeToTopic()
+      case PromptOptions.EditTopicMessage:
+        await this.editTopicMessage()
+        break
+      case PromptOptions.EditTopicMode:
+        await this.editTopicMode()
+        break
+      case PromptOptions.SubscribeTopic:
+        await this.subscribeTopic()
         break
       case PromptOptions.QueryTopic:
         await this.queryTopic()
@@ -218,10 +228,45 @@ export class ClientInquirer extends BaseInquirer {
   }
 
   /**
-   * This function will sent data to Broker server to modify an existed topic on Broker's ledger
+   * This function will sent data to Broker server to modify the name of an existed topic on Broker's ledger
    */
-  public async editTopic() {
-    let reqBody = await this.getTopicDetails()
+  public async editTopicName() {
+    const editType = 'name'
+    const topicNumber = (await inquirer.prompt([this.inquireInput(Title.TopicNumberTitle)])).input
+    const topicName = (await inquirer.prompt([this.inquireInput(Title.TopicNameTitle)])).input
+    let reqBody = { topicNumber, editValue: topicName, editType }
+
+    let response = await this.clientApi.editTopic(await this.addAuthInfo(reqBody))
+    console.log(greenText(response.message))
+  }
+
+  /**
+   * This function will sent data to Broker server to modify the message of an existed topic on Broker's ledger
+   */
+   public async editTopicMessage() {
+    const editType = 'message'
+    const topicNumber = (await inquirer.prompt([this.inquireInput(Title.TopicNumberTitle)])).input
+    const message = (await inquirer.prompt([this.inquireInput(Title.MessageDetailsTitle)])).input
+    let reqBody = { topicNumber, editValue: message, editType }
+
+    let response = await this.clientApi.editTopic(await this.addAuthInfo(reqBody))
+    console.log(greenText(response.message))
+  }
+
+  /**
+   * This function will sent data to Broker server to modify the mode of an existed topic on Broker's ledger
+   */
+   public async editTopicMode() {
+    const editType = 'mode'
+    let mode
+    const topicNumber = (await inquirer.prompt([this.inquireInput(Title.TopicNumberTitle)])).input
+    const confirm = await inquirer.prompt([this.inquireConfirmation('Do you want to make this topic public?')])
+    if (confirm.options === ConfirmOptions.Yes) {
+      mode = 'public'
+    } else {
+      mode = 'private'
+    }
+    let reqBody = { topicNumber, editValue: mode, editType }
 
     let response = await this.clientApi.editTopic(await this.addAuthInfo(reqBody))
     console.log(greenText(response.message))
@@ -230,11 +275,11 @@ export class ClientInquirer extends BaseInquirer {
   /**
    * This function will sent data to Broker server to subscribe for an existed topic on Broker's ledger
    */
-  public async subscribeToTopic() {
+  public async subscribeTopic() {
     const topicNumber = (await inquirer.prompt([this.inquireInput(Title.TopicNumberTitle)])).input
     const reqBody = { topicNumber }
 
-    let response = await this.clientApi.subscribeToTopic(await this.addAuthInfo(reqBody))
+    let response = await this.clientApi.subscribeTopic(await this.addAuthInfo(reqBody))
     console.log(greenText(response.message))
   }
 
