@@ -221,7 +221,7 @@ export class ClientInquirer extends BaseInquirer {
    * This function will sent data to Broker server to modify an existed topic on Broker's ledger
    */
   public async editTopic() {
-    let reqBody = this.getTopicDetails()
+    let reqBody = await this.getTopicDetails()
 
     let response = await this.clientApi.editTopic(await this.addAuthInfo(reqBody))
     console.log(greenText(response.message))
