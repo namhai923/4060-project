@@ -13,9 +13,9 @@ let brokerApi = {
     let url = '/createTopic';
     return axiosClient.post(url, {topicNumber, topicName, message, mode, clientDid, clientThreadId});
   },
-  publishToTopic: ({topicNumber, message, clientDid, clientThreadId}) => {
-    let url = '/publishToTopic';
-    return axiosClient.post(url, {topicNumber, message, clientDid, clientThreadId});
+  editTopic: ({topicNumber, topicName, message, mode, clientDid, clientThreadId}) => {
+    let url = '/editTopic';
+    return axiosClient.post(url, {topicNumber, topicName, message, mode, clientDid, clientThreadId});
   },
   subscribeToTopic: ({topicNumber, clientDid, clientThreadId}) => {
     let url = '/subscribeToTopic';
