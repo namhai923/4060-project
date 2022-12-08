@@ -333,6 +333,34 @@ app.post('/subscribeTopic', async function (req, res) {
 })
 
 /**
+ * This function will get all topics' basic information in HF ledger
+ */
+ app.post('/showTopics', async function (req, res) {
+  try {
+
+    let { clientDid } = req.body
+    let response
+    
+    let authMessage = await auth(clientDid, async () => {
+      const result = await contract.evaluateTransaction('queryAllTopics')
+      let allTopics = JSON.parse(result.toString())
+      allTopics = allTopics.map((topic: any) => `${topic.key} (${topic.record.mode}): ${topic.record.topicName}`)
+      response = allTopics
+    })
+    
+    res.status(200).json(authMessage ? authMessage : response)
+
+  }
+  catch (error) {
+    res.status(500).json({ errorMessage: `Failed to show all topics: ${error}` })
+  }
+  finally {
+    // Disconnect from the HF gateway.
+    await gateway.disconnect()
+  }
+})
+
+/**
  * This function will get all topics in HF ledger that the client allowed to read
  */
 app.post('/queryAllTopics', async function (req, res) {
@@ -342,14 +370,14 @@ app.post('/queryAllTopics', async function (req, res) {
     let response
     
     let authMessage = await auth(clientDid, async () => {
-        await brokerAgent.setCurrCredFromThread(clientThreadId)
-        let topics = brokerAgent.getAllTopics()
-        let allRecords = []
-        for (let topic of topics) {
-            let record = await contract.evaluateTransaction('queryTopic', topic)
-            allRecords.push({ key: topic, record: JSON.parse(record.toString()) })
-        }
-        response = allRecords
+      await brokerAgent.setCurrCredFromThread(clientThreadId)
+      let topics = brokerAgent.getAllTopics()
+      let allRecords = []
+      for (let topic of topics) {
+          let record = await contract.evaluateTransaction('queryTopic', topic)
+          allRecords.push({ key: topic, record: JSON.parse(record.toString()) })
+      }
+      response = allRecords
     })
 
     res.status(200).json(authMessage ? authMessage : response)
