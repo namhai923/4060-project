@@ -56,8 +56,6 @@ export class Listener {
     }
   }
 
-
-
   /**
    * This function listening for credential offered by Broker's agent
    * 

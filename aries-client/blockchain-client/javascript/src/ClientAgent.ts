@@ -116,7 +116,6 @@ export class ClientAgent extends BaseAgent {
     try {
       const retrievedCredentials = await this.agent.proofs.getRequestedCredentialsForProofRequest(proofRecord.id, {
         filterByPresentationPreview: true,
-        
       })
 
       let requestedCredentials = this.agent.proofs.autoSelectCredentialsForProofRequest(retrievedCredentials)

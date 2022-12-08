@@ -9,6 +9,12 @@ export enum ConfirmOptions {
   No = 'no',
 }
 
+export enum EditOptions {
+  Name = 'name',
+  Message = 'message',
+  Mode = 'mode'
+}
+
 export class BaseInquirer {
   public optionsInquirer: { type: string; prefix: string; name: string; message: string; choices: string[] }
   public inputInquirer: { type: string; prefix: string; name: string; message: string; choices: string[] }
@@ -45,6 +51,12 @@ export class BaseInquirer {
   public inquireConfirmation(title: string) {
     this.optionsInquirer.message = title
     this.optionsInquirer.choices = [ConfirmOptions.Yes, ConfirmOptions.No]
+    return this.optionsInquirer
+  }
+
+  public inquireEditType(title: string) {
+    this.optionsInquirer.message = title
+    this.optionsInquirer.choices = [EditOptions.Name, EditOptions.Message, EditOptions.Mode]
     return this.optionsInquirer
   }
 }
