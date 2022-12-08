@@ -25,6 +25,7 @@ enum PromptOptions {
   CreateConnection    = 'Connect to Broker',
   CreateTopic         = 'Create new topic',
   EditTopic           = 'Edit topic',
+  ShowTopics          = 'Show all available topics',
   SubscribeTopic      = 'Subscribe to topic',
   QueryTopic          = 'Query topic',
   QueryAllTopics      = 'Query all subscribed topics',
@@ -84,6 +85,7 @@ export class ClientInquirer extends BaseInquirer {
     if (this.clientAgent.connected) {
       const connectedOptions = [PromptOptions.CreateTopic,
                                 PromptOptions.EditTopic,
+                                PromptOptions.ShowTopics,
                                 PromptOptions.SubscribeTopic,
                                 PromptOptions.QueryTopic,
                                 PromptOptions.QueryAllTopics,
@@ -112,6 +114,9 @@ export class ClientInquirer extends BaseInquirer {
         break
       case PromptOptions.EditTopic:
         await this.editTopic()
+        break
+      case PromptOptions.ShowTopics:
+        await this.showTopics()
         break
       case PromptOptions.SubscribeTopic:
         await this.subscribeTopic()
@@ -240,6 +245,16 @@ export class ClientInquirer extends BaseInquirer {
 
     let response = await this.clientApi.editTopic(await this.addAuthInfo(reqBody))
     console.log(greenText(response.message))
+  }
+
+  /**
+   * This function will sent data to Broker server to get basic information of all existed topics on Broker's ledger
+   */
+  public async showTopics() {
+    let response = await this.clientApi.showTopics({ clientDid: (await this.clientAgent.getConnectionRecord()).did })
+    for (let topic of response) {
+      console.log(greenText(topic))
+    }
   }
 
   /**

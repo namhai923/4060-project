@@ -75,6 +75,16 @@ class TopicClient {
     }
   }
 
+  async showTopics(args) {
+    try {
+      let response = await brokerApi.showTopics(args)
+      return response;
+    }
+    catch (err) {
+      console.log(err);
+    }
+  }
+
   /**
    * This function will send request to Broker server to query all topics that the client allowed to read on Broker's ledger
    * 

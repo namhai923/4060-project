@@ -106,7 +106,6 @@ export class ClientAgent extends BaseAgent {
     return connection
   }
 
-
   /**
    * This function will accept proof requested by Broker
    * 

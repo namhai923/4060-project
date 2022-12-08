@@ -21,6 +21,10 @@ let brokerApi = {
     let url = '/subscribeTopic';
     return axiosClient.post(url, {topicNumber, clientDid, clientThreadId});
   },
+  showTopics: ({clientDid}) => {
+    let url = '/showTopics';
+    return axiosClient.post(url, {clientDid});
+  },
   queryAllTopics: ({clientDid, clientThreadId}) => {
     let url = '/queryAllTopics';
     return axiosClient.post(url, {clientDid, clientThreadId})
