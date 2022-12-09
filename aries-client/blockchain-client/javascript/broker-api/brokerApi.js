@@ -25,9 +25,9 @@ let brokerApi = {
     let url = '/showTopics';
     return axiosClient.post(url, {clientDid});
   },
-  queryAllTopics: ({clientDid, clientThreadId}) => {
-    let url = '/queryAllTopics';
-    return axiosClient.post(url, {clientDid, clientThreadId})
+  queryMulTopics: ({queryType, clientDid, clientThreadId}) => {
+    let url = '/queryMulTopics';
+    return axiosClient.post(url, {queryType, clientDid, clientThreadId})
   }
 }
 

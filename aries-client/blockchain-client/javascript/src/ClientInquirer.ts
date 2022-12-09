@@ -13,7 +13,7 @@ import { textSync } from 'figlet'
 import inquirer from 'inquirer'
 
 import { ClientAgent } from './ClientAgent'
-import { BaseInquirer, ConfirmOptions, EditOptions } from './BaseInquirer'
+import { BaseInquirer, ConfirmOptions, TopicOptions, TopicType } from './BaseInquirer'
 import { Listener } from './Listener'
 import { greenText, Title } from './OutputClass'
 import TopicClient from '../client-app/TopicClient'
@@ -28,8 +28,7 @@ enum PromptOptions {
   ShowTopics          = 'Show all available topics',
   SubscribeTopic      = 'Subscribe to topic',
   QueryTopic          = 'Query topic',
-  QueryAllTopics      = 'Query all subscribed topics',
-  QueryCreatedTopics  = 'Query all created topics',
+  QueryMulTopics      = 'Query multiple topics',
   Exit                = 'Exit',
   ClearAll            = 'Clear all credentials and connections',
 }
@@ -88,8 +87,7 @@ export class ClientInquirer extends BaseInquirer {
                                 PromptOptions.ShowTopics,
                                 PromptOptions.SubscribeTopic,
                                 PromptOptions.QueryTopic,
-                                PromptOptions.QueryAllTopics,
-                                PromptOptions.QueryCreatedTopics,
+                                PromptOptions.QueryMulTopics,
                                 PromptOptions.Exit]
       return await inquirer.prompt([this.inquireOptions(connectedOptions)])
     }
@@ -124,11 +122,8 @@ export class ClientInquirer extends BaseInquirer {
       case PromptOptions.QueryTopic:
         await this.queryTopic()
         break
-      case PromptOptions.QueryAllTopics:
-        await this.queryAllTopics()
-        break
-      case PromptOptions.QueryCreatedTopics:
-        await this.queryCreatedTopics()
+      case PromptOptions.QueryMulTopics:
+        await this.queryMulTopics()
         break
       case PromptOptions.Exit:
         await this.exit()
@@ -202,7 +197,7 @@ export class ClientInquirer extends BaseInquirer {
     const topicNumber = (await inquirer.prompt([this.inquireInput(Title.TopicNumberTitle)])).input
     const topicName = (await inquirer.prompt([this.inquireInput(Title.TopicNameTitle)])).input
     const message = (await inquirer.prompt([this.inquireInput(Title.MessageDetailsTitle)])).input
-    const confirm = await inquirer.prompt([this.inquireConfirmation('Do you want to make this topic public?')])
+    const confirm = await inquirer.prompt([this.inquireConfirmation(Title.TopicModeTitle)])
     if (confirm.options === ConfirmOptions.Yes) {
       mode = 'public'
     } else {
@@ -227,14 +222,14 @@ export class ClientInquirer extends BaseInquirer {
    */
   public async editTopic() {
     const topicNumber = (await inquirer.prompt([this.inquireInput(Title.TopicNumberTitle)])).input
-    const editType = await inquirer.prompt([this.inquireEditType('What do you want to edit?')])
+    const editType = await inquirer.prompt([this.inquireEditType(Title.EditTypeTitle)])
     let editValue
-    if (editType.options === EditOptions.Name) {
+    if (editType.options === TopicOptions.Name) {
       editValue = (await inquirer.prompt([this.inquireInput(Title.TopicNameTitle)])).input
-    } else if (editType.options === EditOptions.Message) {
+    } else if (editType.options === TopicOptions.Message) {
       editValue = (await inquirer.prompt([this.inquireInput(Title.MessageDetailsTitle)])).input
     } else {
-      const confirm = await inquirer.prompt([this.inquireConfirmation('Do you want to make this topic public?')])
+      const confirm = await inquirer.prompt([this.inquireConfirmation(Title.TopicModeTitle)])
       if (confirm.options === ConfirmOptions.Yes) {
         editValue = 'public'
       } else {
@@ -280,22 +275,13 @@ export class ClientInquirer extends BaseInquirer {
   }
 
   /**
-   * This function will sent data to Broker server to query all topics on Broker's ledger that this client allowed to read
+   * This function will sent data to Broker server to query all created or subscribed topics on Broker's ledger
    */
-  public async queryAllTopics(){
-    const reqBody = {}
+  public async queryMulTopics(){
+    const queryType = await inquirer.prompt([this.inquireTopicType(Title.QueryTypeTitle)])
+    const reqBody = { queryType: queryType.options }
 
-    let response = await this.clientApi.queryAllTopics(await this.addAuthInfo(reqBody))
-    console.log(response)
-  }
-
-  /**
-   * This function will sent data to Broker server to query all topics created by this client on Broker's ledger
-   */
-  public async queryCreatedTopics(){
-    const reqBody = {}
-
-    let response = await this.clientApi.queryCreatedTopics(await this.addAuthInfo(reqBody))
+    let response = await this.clientApi.queryMulTopics(await this.addAuthInfo(reqBody))
     console.log(response)
   }
 

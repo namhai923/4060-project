@@ -91,42 +91,10 @@ class TopicClient {
    * @param {*} args data that is needed for querying all topics that the client allowed to read on Broker's ledger
    * @returns all topics' data that the client allowed to read on Broker's ledger
    */
-  async queryAllTopics(args) {
+  async queryMulTopics(args) {
     try {
-      let response = await brokerApi.queryAllTopics(args)
+      let response = await brokerApi.queryMulTopics(args)
       return response;
-    }
-    catch (err) {
-      console.log(err);
-    }
-  }
-  
-  /**
-   * This function will send multiple requests to Broker server to query all topics that are created by the client on Broker's ledger
-   * 
-   * @param {*} args data that is needed for querying a topic created by this client on Broker's ledger
-   * @returns all topics' data created by the client on Broker's ledger
-   */
-  async queryCreatedTopics(args) {
-    try {
-      // Get the network (channel) our contract is deployed to.
-      let network = await this.gateway.getNetwork(this.channelName);
-  
-      // Get the contract from the network.
-      let contract = network.getContract(this.chaincodeName);
-  
-      // Get all topics on client's ledger
-      let allTopics = await contract.evaluateTransaction('queryAllTopics');
-  
-      allTopics = JSON.parse(allTopics);
-
-      // for each topic on client's ledger send a request to query its data on Broker's ledger
-      for (let topic of allTopics) {
-        Object.assign(args, {topicNumber: topic.key})
-        topic.record = await this.queryTopic(args);
-      }
-  
-      return allTopics;
     }
     catch (err) {
       console.log(err);

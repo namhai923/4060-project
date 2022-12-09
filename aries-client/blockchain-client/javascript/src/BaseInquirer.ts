@@ -6,13 +6,18 @@ import { Title } from './OutputClass'
 
 export enum ConfirmOptions {
   Yes = 'yes',
-  No = 'no',
+  No = 'no'
 }
 
-export enum EditOptions {
+export enum TopicOptions {
   Name = 'name',
   Message = 'message',
   Mode = 'mode'
+}
+
+export enum TopicType {
+  Created = 'created',
+  Subscribed = 'subscribed'
 }
 
 export class BaseInquirer {
@@ -56,7 +61,13 @@ export class BaseInquirer {
 
   public inquireEditType(title: string) {
     this.optionsInquirer.message = title
-    this.optionsInquirer.choices = [EditOptions.Name, EditOptions.Message, EditOptions.Mode]
+    this.optionsInquirer.choices = [TopicOptions.Name, TopicOptions.Message, TopicOptions.Mode]
+    return this.optionsInquirer
+  }
+
+  public inquireTopicType(title: string) {
+    this.optionsInquirer.message = title
+    this.optionsInquirer.choices = [TopicType.Created, TopicType.Subscribed]
     return this.optionsInquirer
   }
 }

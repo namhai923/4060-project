@@ -19,6 +19,9 @@ export enum Title {
   TopicNumberTitle = '\nWrite your topic number :',
   MessageDetailsTitle = '\nWrite your message here :',
   TopicNameTitle = '\nName of the topic :',
+  TopicModeTitle = 'Do you want to make this topic public?',
+  EditTypeTitle = 'What do you want to edit?',
+  QueryTypeTitle = 'Which type of topics to query?',
   ConfirmTitle = '\n\nAre you sure?',
 }
 
