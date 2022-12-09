@@ -335,7 +335,7 @@ app.post('/subscribeTopic', async function (req, res) {
 /**
  * This function will get all topics' basic information in HF ledger
  */
- app.post('/showTopics', async function (req, res) {
+app.post('/showTopics', async function (req, res) {
   try {
 
     let { clientDid } = req.body
@@ -361,17 +361,17 @@ app.post('/subscribeTopic', async function (req, res) {
 })
 
 /**
- * This function will get all topics in HF ledger that the client allowed to read
+ * This function will get all created or subscribed topics of the client in HF ledger
  */
-app.post('/queryAllTopics', async function (req, res) {
+app.post('/queryMulTopics', async function (req, res) {
   try {
 
-    let { clientDid, clientThreadId } = req.body
+    let { queryType, clientDid, clientThreadId } = req.body
     let response
     
     let authMessage = await auth(clientDid, async () => {
       await brokerAgent.setCurrCredFromThread(clientThreadId)
-      let topics = brokerAgent.getAllTopics()
+      let topics = brokerAgent.getMulTopics(queryType)
       let allRecords = []
       for (let topic of topics) {
           let record = await contract.evaluateTransaction('queryTopic', topic)
@@ -396,7 +396,7 @@ app.post('/queryAllTopics', async function (req, res) {
  * This function will get all existed topics currently in HF ledger
  * (ONLY USE FOR DEVELOPING AND TESTING PURPOSE)
  */
- app.get('/queryAllTopics', async function (req, res) {
+app.get('/queryAllTopics', async function (req, res) {
   try {
 
     const result = await contract.evaluateTransaction('queryAllTopics')
@@ -416,7 +416,7 @@ app.post('/queryAllTopics', async function (req, res) {
  * This function will delete all existed credentials and connections in HA agent
  * (ONLY USE FOR DEVELOPING AND TESTING PURPOSE)
  */
- app.get('/clearAll', async function (req, res) {
+app.get('/clearAll', async function (req, res) {
 
   // get a list of all existed credentials
   let credentialRecords = await brokerAgent.agent.credentials.getAll()

@@ -330,15 +330,22 @@ export class BrokerAgent extends BaseAgent {
   }
 
   /**
-   * This function will get all topics that the client allowed to read
+   * This function will get all created or subscribed topics of the client
    * 
-   * @returns {string[]} list of topics that the client allowed to read
+   * @returns {string[]} list of created or subscribed topics of the client
    */
-  public getAllTopics() {
+  public getMulTopics(topicType: string) {
     let topics: string[] = []
     if (this.currentCredRecord?.credentialAttributes) {
-      if(this.currentCredRecord?.credentialAttributes[2].value != '') {
-        topics = this.currentCredRecord?.credentialAttributes[2].value.split(',')
+      let attrNum
+      if (topicType === 'created') {
+        attrNum = 1
+      } else {
+        attrNum = 2
+      }
+
+      if(this.currentCredRecord?.credentialAttributes[attrNum].value != '') {
+        topics = this.currentCredRecord?.credentialAttributes[attrNum].value.split(',')
       }
     }
     return topics
