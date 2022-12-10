@@ -11,6 +11,7 @@ class Broker extends Contract {
         if (!topicAsBytes || topicAsBytes.length === 0) {
             return { message: `${topicNumber} does not exist` };
         }
+
         console.info('============= END : Initialize Query Topic ===========');
         return topicAsBytes.toString();
     }
@@ -28,7 +29,8 @@ class Broker extends Contract {
             docType: 'topic',
             topicName,
             message,
-            mode
+            mode,
+            subscribers: ''
         }
 
         await ctx.stub.putState(topicNumber, Buffer.from(JSON.stringify(topic)));
@@ -57,6 +59,26 @@ class Broker extends Contract {
 
         console.info('============= END : Edit a Topic ===========');
         return { message: `${topicNumber} is updated` };
+    }
+
+    // Add a subscriber to a topic on the ledger.
+    async addSubscriber(ctx, topicNumber, subscriberID) {
+        console.info('============= START : Add a Subscriber to a Topic ===========');
+
+        const topicAsBytes = await ctx.stub.getState(topicNumber); // get the topic from chaincode state
+        if (!topicAsBytes || topicAsBytes.length === 0) {
+            return { message: `${topicNumber} does not exist` };
+        }
+        const topic = JSON.parse(topicAsBytes.toString());
+        let subscriberList = topic.subscribers.split(',')
+        subscriberList.push(subscriberID)
+        
+        topic.subscribers = subscriberList.toString()
+
+        await ctx.stub.putState(topicNumber, Buffer.from(JSON.stringify(topic))); // update topic on ledger
+
+        console.info('============= END : Add a Subscriber to a Topic ===========');
+        return { message: `This user is added` };
     }
 
     // Query all topics from the ledger.

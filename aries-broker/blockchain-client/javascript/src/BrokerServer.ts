@@ -169,6 +169,82 @@ app.post('/connectToAgent', async function (req, res) {
 })
 
 /**
+ * This function will let client get their credential ID
+ */
+app.post('/getClientID', async function (req, res) {
+  try {
+
+    let { clientDid, clientThreadId } = req.body
+    let response
+
+    let authMessage = await auth(clientDid, async () => {
+      await brokerAgent.setCurrCredFromThread(clientThreadId)
+      let clientID = brokerAgent.getClientID()
+
+      response = clientID
+    })
+
+    res.status(200).json({ message: authMessage ? authMessage : response })
+  }
+  catch (error) {
+    res.status(500).json({ errorMessage: `Failed to get Client ID: ${error}` })
+  }
+  finally {
+    // Disconnect from the HF gateway.
+    await gateway.disconnect()
+  }
+})
+
+/**
+ * This function will let client get their credential ID
+ */
+app.post('/addSubscriber', async function (req, res) {
+  try {
+
+    let { topicNumber, subscriberID, clientDid, clientThreadId } = req.body
+    let response
+
+    let authMessage = await auth(clientDid, async () => {
+      let result = await contract.evaluateTransaction('queryTopic', topicNumber)
+      let resultJSON = JSON.parse(result.toString())
+
+      // check whether the topic is existed in HF ledger or not
+      if(resultJSON.message && resultJSON.message == `${topicNumber} does not exist`) {
+        response = resultJSON.message
+      }
+      else {
+        // check whether the client is permitted to add subscriber to the topic or not
+        await brokerAgent.setCurrCredFromThread(clientThreadId)
+        if (brokerAgent.checkTopics(topicNumber, true)) {
+          let subscriberList = resultJSON.subscribers.split(',')
+          if (subscriberList.includes(subscriberID)) {
+            response = 'This user is already able to subscribe this topic'
+          }
+          else {
+            let result = await contract.submitTransaction('addSubscriber', topicNumber, subscriberID)
+            let resultJSON = JSON.parse(result.toString())
+            response = resultJSON.message
+          }
+        }
+        else {
+          response = 'Not permitted to add subscriber to this topic'
+        }
+
+      }
+    })
+
+    res.status(200).json({ message: authMessage ? authMessage : response })
+  }
+  catch (error) {
+    res.status(500).json({ errorMessage: `Failed to add subscriber: ${error}` })
+  }
+  finally {
+    // Disconnect from the HF gateway.
+    await gateway.disconnect()
+  }
+})
+
+/**
  * This function will let client query a topic from HF ledger
  */
 app.post('/queryTopic', async function (req, res) {
@@ -194,7 +270,7 @@ app.post('/queryTopic', async function (req, res) {
           response = resultJSON
         }
         else {
-          response = { message: 'The agent is not permitted to query this topic' }
+          response = { message: 'Not permitted to query this topic' }
         }
       }
     })
@@ -269,7 +345,7 @@ app.post('/editTopic', async function (req, res) {
           response = resultJSON.message
         }
         else {
-          response = 'The agent is not permitted to edit this topic'
+          response = 'Not permitted to edit this topic'
         }
       }
     })
@@ -304,12 +380,23 @@ app.post('/subscribeTopic', async function (req, res) {
         response = resultJSON.message
       }
       else {
+
         // if the client is not permitted to read the topic then give them the permission
         await brokerAgent.setCurrCredFromThread(clientThreadId)
         if (!brokerAgent.checkTopics(topicNumber, false)) {
-          if (resultJSON.mode === 'private') {
-            response = `${topicNumber} is private`
-          } else {
+          let clientID = brokerAgent.getClientID()
+          let subscriberList = resultJSON.subscribers.split(',')
+          if(!subscriberList.includes(clientID)) {
+            if (resultJSON.mode === 'private') {
+              response = `${topicNumber} is private`
+            } else {
+              await brokerAgent.sendMessage('Issuing new Credentials...')
+              await brokerAgent.issueCredential(topicNumber, false)
+              await contract.submitTransaction('addSubscriber', topicNumber, clientID)
+              response = `Successfully subscribe to ${topicNumber}`
+            }
+          }
+          else {
             await brokerAgent.sendMessage('Issuing new Credentials...')
             await brokerAgent.issueCredential(topicNumber, false)
             response = `Successfully subscribe to ${topicNumber}`
@@ -324,7 +411,7 @@ app.post('/subscribeTopic', async function (req, res) {
     res.status(200).json({ message: authMessage ? authMessage : response })
   }
   catch (error) {
-    res.status(500).json({ errorMessage: `Failed to subscribe to topic: ${error}` })
+    res.status(500).json({ errorMessage: `Failed to subscribe topic: ${error}` })
   }
   finally {
     // Disconnect from the HF gateway.
@@ -333,17 +420,51 @@ app.post('/subscribeTopic', async function (req, res) {
 })
 
 /**
- * This function will get all topics' basic information in HF ledger
+ * This function check whether a string is a substring of the other or not
+ * 
+ * @param shortString 
+ * @param longString 
+ * @returns true if shortString is substring of longString, otherwise false
  */
-app.post('/showTopics', async function (req, res) {
+let substring = (shortString: string, longString: string) => {
+  let shortLength = shortString.length
+  let longLength = longString.length
+
+  for (let i = 0; i <= longLength - shortLength; i++) {
+    let j
+    for (j = 0; j < shortLength; j++) {
+      if (longString[i + j] !== shortString[j]) {
+        break
+      }
+    }
+    if (j === shortLength) {
+      return true
+    }
+  }
+  return false
+}
+
+/**
+ * This function will get all searched topics' basic information in HF ledger
+ */
+app.post('/searchTopic', async function (req, res) {
   try {
 
-    let { clientDid } = req.body
+    let { searchValue, searchType, clientDid } = req.body
     let response
     
     let authMessage = await auth(clientDid, async () => {
       const result = await contract.evaluateTransaction('queryAllTopics')
       let allTopics = JSON.parse(result.toString())
+      allTopics = allTopics.filter((topic: any) => {
+        if (searchType === 'number') {
+          return substring(searchValue, topic.key)
+        } else if (searchType === 'name') {
+          return substring(searchValue, topic.record.topicName)
+        } else {
+          return (topic.record.mode === searchValue)
+        }
+      })
       allTopics = allTopics.map((topic: any) => `${topic.key} (${topic.record.mode}): ${topic.record.topicName}`)
       response = allTopics
     })
@@ -352,7 +473,7 @@ app.post('/showTopics', async function (req, res) {
 
   }
   catch (error) {
-    res.status(500).json({ errorMessage: `Failed to show all topics: ${error}` })
+    res.status(500).json({ errorMessage: `Failed to search for topics: ${error}` })
   }
   finally {
     // Disconnect from the HF gateway.
@@ -384,7 +505,7 @@ app.post('/queryMulTopics', async function (req, res) {
 
   }
   catch (error) {
-    res.status(500).json({ errorMessage: `Failed to query all topics: ${error}` })
+    res.status(500).json({ errorMessage: `Failed to query multiple topics: ${error}` })
   }
   finally {
     // Disconnect from the HF gateway.

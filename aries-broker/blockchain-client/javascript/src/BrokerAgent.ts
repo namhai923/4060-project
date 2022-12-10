@@ -352,7 +352,20 @@ export class BrokerAgent extends BaseAgent {
   }
 
   /**
-   * This function will get the credenttial of the current connected client
+   * This function will get the credential ID of the current connected client
+   * 
+   * @returns client's credential ID
+   */
+  public getClientID() {
+    let clientID = ''
+    if (this.currentCredRecord?.credentialAttributes) {
+      clientID = this.currentCredRecord?.credentialAttributes[0].value
+    }
+    return clientID
+  }
+
+  /**
+   * This function will get the credential of the current connected client
    * 
    * @param threadId threadId provided by client
    */
