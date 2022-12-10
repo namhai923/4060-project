@@ -2,14 +2,13 @@
  * REMARKS: Base Inquirer Setup for client's Command Line Interface 
  */
 
-import { Title } from './OutputClass'
-
 export enum ConfirmOptions {
   Yes = 'yes',
   No = 'no'
 }
 
-export enum TopicOptions {
+export enum AttrOptions {
+  Number = 'number',
   Name = 'name',
   Message = 'message',
   Mode = 'mode'
@@ -18,6 +17,11 @@ export enum TopicOptions {
 export enum TopicType {
   Created = 'created',
   Subscribed = 'subscribed'
+}
+
+export enum TopicMode {
+  Public = 'public',
+  Private = 'private'
 }
 
 export class BaseInquirer {
@@ -42,8 +46,8 @@ export class BaseInquirer {
     }
   }
 
-  public inquireOptions(promptOptions: string[]) {
-    this.optionsInquirer.message = Title.OptionsTitle
+  public inquireOptions(title: string, promptOptions: string[]) {
+    this.optionsInquirer.message = title
     this.optionsInquirer.choices = promptOptions
     return this.optionsInquirer
   }
@@ -51,23 +55,5 @@ export class BaseInquirer {
   public inquireInput(title: string) {
     this.inputInquirer.message = title
     return this.inputInquirer
-  }
-
-  public inquireConfirmation(title: string) {
-    this.optionsInquirer.message = title
-    this.optionsInquirer.choices = [ConfirmOptions.Yes, ConfirmOptions.No]
-    return this.optionsInquirer
-  }
-
-  public inquireEditType(title: string) {
-    this.optionsInquirer.message = title
-    this.optionsInquirer.choices = [TopicOptions.Name, TopicOptions.Message, TopicOptions.Mode]
-    return this.optionsInquirer
-  }
-
-  public inquireTopicType(title: string) {
-    this.optionsInquirer.message = title
-    this.optionsInquirer.choices = [TopicType.Created, TopicType.Subscribed]
-    return this.optionsInquirer
   }
 }

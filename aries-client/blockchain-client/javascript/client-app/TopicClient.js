@@ -35,6 +35,32 @@ class TopicClient {
   }
 
   /**
+   * This function will send request to Broker server to show user ID
+   * 
+   * @param {*} args data that is needed for getting user ID
+   * @returns response message from Broker server
+   */
+  async getClientID(args) {
+    try {
+      let res = await brokerApi.getClientID(args);
+      return res;
+    }
+    catch (err) {
+      console.log(err)
+    }
+  }
+
+  async addSubscriber(args) {
+    try {
+      let res = await brokerApi.addSubscriber(args);
+      return res;
+    }
+    catch (err) {
+      console.log(err)
+    }
+  }
+
+  /**
    * This function will send request to Broker server to create new topic on Broker's ledger 
    * 
    * @param {*} args data that is needed for creating new topic on Broker's ledger
@@ -75,9 +101,15 @@ class TopicClient {
     }
   }
 
-  async showTopics(args) {
+  /**
+   * This function will send request to Broker server to search for existed topics on Broker's ledger
+   * 
+   * @param {*} args data that is needed for searching existed topics on Broker's ledger
+   * @returns searched topics on Broker's ledger
+   */
+  async searchTopic(args) {
     try {
-      let response = await brokerApi.showTopics(args)
+      let response = await brokerApi.searchTopic(args)
       return response;
     }
     catch (err) {

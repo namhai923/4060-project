@@ -13,7 +13,7 @@ import { textSync } from 'figlet'
 import inquirer from 'inquirer'
 
 import { ClientAgent } from './ClientAgent'
-import { BaseInquirer, ConfirmOptions, TopicOptions, TopicType } from './BaseInquirer'
+import { BaseInquirer, ConfirmOptions, AttrOptions, TopicType, TopicMode } from './BaseInquirer'
 import { Listener } from './Listener'
 import { greenText, Title } from './OutputClass'
 import TopicClient from '../client-app/TopicClient'
@@ -22,10 +22,12 @@ import TopicClient from '../client-app/TopicClient'
  * List of actions to interact with Broker's ledger
  */
 enum PromptOptions {
+  ShowID              = 'Show my ID',
   CreateConnection    = 'Connect to Broker',
   CreateTopic         = 'Create new topic',
   EditTopic           = 'Edit topic',
-  ShowTopics          = 'Show all available topics',
+  AddSubscriber       = 'Add subscriber to your topic',
+  SearchTopic         = 'Search from available topics',
   SubscribeTopic      = 'Subscribe to topic',
   QueryTopic          = 'Query topic',
   QueryMulTopics      = 'Query multiple topics',
@@ -44,9 +46,9 @@ export const runClientAgent = async () => {
 }
 
 export class ClientInquirer extends BaseInquirer {
-  public clientAgent: ClientAgent     // HA agent for authenticating purpose
-  public listener: Listener           // listener for response from Broker's server
-  public clientApi: TopicClient       // client's api to send data and interact with Broker's server
+  private clientAgent: ClientAgent     // HA agent for authenticating purpose
+  private listener: Listener           // listener for response from Broker's server
+  private clientApi: TopicClient       // client's api to send data and interact with Broker's server
 
   public constructor(clientAgent: ClientAgent, clientApi: TopicClient) {
     super()
@@ -82,18 +84,20 @@ export class ClientInquirer extends BaseInquirer {
    */
   private async getPromptChoice() {
     if (this.clientAgent.connected) {
-      const connectedOptions = [PromptOptions.CreateTopic,
+      const connectedOptions = [PromptOptions.ShowID,
+                                PromptOptions.CreateTopic,
                                 PromptOptions.EditTopic,
-                                PromptOptions.ShowTopics,
+                                PromptOptions.AddSubscriber,
+                                PromptOptions.SearchTopic,
                                 PromptOptions.SubscribeTopic,
                                 PromptOptions.QueryTopic,
                                 PromptOptions.QueryMulTopics,
                                 PromptOptions.Exit]
-      return await inquirer.prompt([this.inquireOptions(connectedOptions)])
+      return await inquirer.prompt([this.inquireOptions(Title.OptionsTitle, connectedOptions)])
     }
 
     const reducedOption = [PromptOptions.CreateConnection, PromptOptions.Exit, PromptOptions.ClearAll]
-    return await inquirer.prompt([this.inquireOptions(reducedOption)])
+    return await inquirer.prompt([this.inquireOptions(Title.OptionsTitle, reducedOption)])
   }
 
   /**
@@ -107,14 +111,20 @@ export class ClientInquirer extends BaseInquirer {
       case PromptOptions.CreateConnection:
         await this.connection()
         break
+      case PromptOptions.ShowID:
+        await this.showID()
+        break
       case PromptOptions.CreateTopic:
         await this.createTopic()
         break
       case PromptOptions.EditTopic:
         await this.editTopic()
         break
-      case PromptOptions.ShowTopics:
-        await this.showTopics()
+      case PromptOptions.AddSubscriber:
+        await this.addSubscriber()
+        break
+      case PromptOptions.SearchTopic:
+        await this.searchTopic()
         break
       case PromptOptions.SubscribeTopic:
         await this.subscribeTopic()
@@ -138,7 +148,7 @@ export class ClientInquirer extends BaseInquirer {
   /**
    * This function will connect client agent to Broker's agent and start listening to Broker's agent
    */
-  public async connection() {
+  private async connection() {
     let invitation = await this.clientAgent.printConnectionInvite()
     this.listener.proofRequestListener(this.clientAgent)
     this.listener.credentialOfferListener(this.clientAgent)
@@ -150,10 +160,28 @@ export class ClientInquirer extends BaseInquirer {
    * 
    * @param invitationUrl invitation url that will be sent to Broker server
    */
-  public async sendInvitation(invitationUrl: string) {
+  private async sendInvitation(invitationUrl: string) {
     const reqBody = { invitationUrl }
     let response = await this.clientApi.connectToAgent(reqBody)
     await this.clientAgent.waitForConnection()
+    console.log(greenText(response.message))
+  }
+
+  /**
+   * This function let uesr show their own credential ID
+   * 
+   */
+  private async showID() {
+    let response = await this.clientApi.getClientID(await this.addAuthInfo({}))
+    console.log(greenText(response.message))
+  }
+
+  private async addSubscriber() {
+    const topicNumber = (await inquirer.prompt([this.inquireInput(Title.TopicNumberTitle)])).input
+    const subscriberID = (await inquirer.prompt([this.inquireInput(Title.AddSubTitle)])).input
+    let reqBody = { topicNumber, subscriberID }
+
+    let response = await this.clientApi.addSubscriber(await this.addAuthInfo(reqBody))
     console.log(greenText(response.message))
   }
 
@@ -162,7 +190,7 @@ export class ClientInquirer extends BaseInquirer {
    * 
    * @returns {string} threadID of client's most current credential
    */
-  public async getLatestCred() {
+  private async getLatestCred() {
     let allRecords = await this.clientAgent.agent.credentials.getAll()
     let currDate = allRecords[0].createdAt, currThreadId = allRecords[0].threadId 
     allRecords.forEach( async element => {
@@ -192,61 +220,66 @@ export class ClientInquirer extends BaseInquirer {
    * 
    * @returns {any} new topic's data
    */
-  public async getTopicDetails() {
-    let mode
+  private async getTopicDetails() {
     const topicNumber = (await inquirer.prompt([this.inquireInput(Title.TopicNumberTitle)])).input
     const topicName = (await inquirer.prompt([this.inquireInput(Title.TopicNameTitle)])).input
     const message = (await inquirer.prompt([this.inquireInput(Title.MessageDetailsTitle)])).input
-    const confirm = await inquirer.prompt([this.inquireConfirmation(Title.TopicModeTitle)])
-    if (confirm.options === ConfirmOptions.Yes) {
-      mode = 'public'
-    } else {
-      mode = 'private'
-    }
+    const mode = await inquirer.prompt([this.inquireOptions(Title.TopicModeTitle, [TopicMode.Public, TopicMode.Private])])
 
-    return { topicNumber, topicName, message, mode }
+    return { topicNumber, topicName, message, mode: mode.options }
   }
 
   /**
    * This function will sent data to Broker server to create a new topic on Broker's ledger
    */
-  public async createTopic() {
+  private async createTopic() {
     let reqBody = await this.getTopicDetails()
 
     let response = await this.clientApi.createTopic(await this.addAuthInfo(reqBody))
     console.log(greenText(response.message))
   }
+  /**
+   * This function will prompt user's choice and input for that
+   * 
+   * @param title title string for prompt options
+   * @returns user's choice and input for that
+   */
+  private async attrPrompt(title: string, attrOptions: string[]) {
+    const attrType = await inquirer.prompt([this.inquireOptions(title, attrOptions)])
+    let attrValue
+    if (attrType.options === AttrOptions.Number) {
+      attrValue = (await inquirer.prompt([this.inquireInput(Title.TopicNumberTitle)])).input
+    } else if (attrType.options === AttrOptions.Name) {
+      attrValue = (await inquirer.prompt([this.inquireInput(Title.TopicNameTitle)])).input
+    } else if (attrType.options === AttrOptions.Message) {
+      attrValue = (await inquirer.prompt([this.inquireInput(Title.MessageDetailsTitle)])).input
+    } else {
+      const mode = await inquirer.prompt([this.inquireOptions(Title.TopicModeTitle, [TopicMode.Public, TopicMode.Private])])
+      attrValue = mode.options
+    }
+    return {attrValue, attrType: attrType.options}
+  }
 
   /**
    * This function will sent data to Broker server to modify an existed topic on Broker's ledger
    */
-  public async editTopic() {
+  private async editTopic() {
     const topicNumber = (await inquirer.prompt([this.inquireInput(Title.TopicNumberTitle)])).input
-    const editType = await inquirer.prompt([this.inquireEditType(Title.EditTypeTitle)])
-    let editValue
-    if (editType.options === TopicOptions.Name) {
-      editValue = (await inquirer.prompt([this.inquireInput(Title.TopicNameTitle)])).input
-    } else if (editType.options === TopicOptions.Message) {
-      editValue = (await inquirer.prompt([this.inquireInput(Title.MessageDetailsTitle)])).input
-    } else {
-      const confirm = await inquirer.prompt([this.inquireConfirmation(Title.TopicModeTitle)])
-      if (confirm.options === ConfirmOptions.Yes) {
-        editValue = 'public'
-      } else {
-        editValue = 'private'
-      }
-    }
-    let reqBody = { topicNumber, editValue, editType: editType.options }
+    let {attrValue: editValue, attrType: editType} = await this.attrPrompt(Title.EditTypeTitle, [AttrOptions.Name, AttrOptions.Message, AttrOptions.Mode])
+    let reqBody = { topicNumber, editValue, editType }
 
     let response = await this.clientApi.editTopic(await this.addAuthInfo(reqBody))
     console.log(greenText(response.message))
   }
 
   /**
-   * This function will sent data to Broker server to get basic information of all existed topics on Broker's ledger
+   * This function will sent data to Broker server to get basic information of searched topics on Broker's ledger
    */
-  public async showTopics() {
-    let response = await this.clientApi.showTopics({ clientDid: (await this.clientAgent.getConnectionRecord()).did })
+  private async searchTopic() {
+    let {attrValue: searchValue, attrType: searchType} = await this.attrPrompt(Title.SearchTypeTitle, [AttrOptions.Number, AttrOptions.Name, AttrOptions.Mode])
+    let reqBody = {searchValue, searchType}
+
+    let response = await this.clientApi.searchTopic(Object.assign(reqBody, { clientDid: (await this.clientAgent.getConnectionRecord()).did }))
     for (let topic of response) {
       console.log(greenText(topic))
     }
@@ -255,7 +288,7 @@ export class ClientInquirer extends BaseInquirer {
   /**
    * This function will sent data to Broker server to subscribe for an existed topic on Broker's ledger
    */
-  public async subscribeTopic() {
+  private async subscribeTopic() {
     const topicNumber = (await inquirer.prompt([this.inquireInput(Title.TopicNumberTitle)])).input
     const reqBody = { topicNumber }
 
@@ -266,7 +299,7 @@ export class ClientInquirer extends BaseInquirer {
   /**
    * This function will sent data to Broker server to query an existed topic on Broker's ledger
    */
-  public async queryTopic(){
+  private async queryTopic(){
     const topicNumber = (await inquirer.prompt([this.inquireInput(Title.TopicNumberTitle)])).input
     const reqBody = { topicNumber }
 
@@ -277,8 +310,8 @@ export class ClientInquirer extends BaseInquirer {
   /**
    * This function will sent data to Broker server to query all created or subscribed topics on Broker's ledger
    */
-  public async queryMulTopics(){
-    const queryType = await inquirer.prompt([this.inquireTopicType(Title.QueryTypeTitle)])
+  private async queryMulTopics(){
+    const queryType = await inquirer.prompt([this.inquireOptions(Title.QueryTypeTitle, [TopicType.Created, TopicType.Subscribed])])
     const reqBody = { queryType: queryType.options }
 
     let response = await this.clientApi.queryMulTopics(await this.addAuthInfo(reqBody))
@@ -288,8 +321,8 @@ export class ClientInquirer extends BaseInquirer {
   /**
    * This function will shutdown client
    */
-  public async exit() {
-    const confirm = await inquirer.prompt([this.inquireConfirmation(Title.ConfirmTitle)])
+  private async exit() {
+    const confirm = await inquirer.prompt([this.inquireOptions(Title.ConfirmTitle, [ConfirmOptions.Yes, ConfirmOptions.No])])
     if (confirm.options === ConfirmOptions.Yes) {
       await this.clientApi.disconnect()
       await this.clientAgent.exit()
@@ -301,7 +334,7 @@ export class ClientInquirer extends BaseInquirer {
    * This function will delete all credentials and connections in HA agent
    * (ONLY USE FOR DEVELOPING AND TESTING PURPOSE)
    */
-  public async clearAll() {
+  private async clearAll() {
     let credentialRecords = await this.clientAgent.agent.credentials.getAll()
     credentialRecords.forEach(async element => {
       await this.clientAgent.agent.credentials.deleteById(element.id)

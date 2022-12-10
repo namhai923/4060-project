@@ -15,14 +15,16 @@ export enum Output {
 }
 
 export enum Title {
-  OptionsTitle = '\nOptions:',
-  TopicNumberTitle = '\nWrite your topic number :',
-  MessageDetailsTitle = '\nWrite your message here :',
-  TopicNameTitle = '\nName of the topic :',
-  TopicModeTitle = 'Do you want to make this topic public?',
-  EditTypeTitle = 'What do you want to edit?',
-  QueryTypeTitle = 'Which type of topics to query?',
-  ConfirmTitle = '\n\nAre you sure?',
+  OptionsTitle          = '\nOptions:',
+  TopicNumberTitle      = '\nWrite your topic number: ',
+  MessageDetailsTitle   = '\nWrite your message here: ',
+  TopicNameTitle        = '\nName of the topic: ',
+  TopicModeTitle        = '\nThe topic is public or private',
+  EditTypeTitle         = '\nWhat do you want to edit?',
+  AddSubTitle           = '\nEnter the subscriber ID: ',
+  QueryTypeTitle        = '\nWhich type of topics to query?',
+  SearchTypeTitle       = '\nSearch topic based on',
+  ConfirmTitle          = '\n\nAre you sure?',
 }
 
 export const greenText = (text: string, reset?: boolean) => {

@@ -5,6 +5,10 @@ let brokerApi = {
     let url = '/connectToAgent';
     return axiosClient.post(url, {invitationUrl});
   },
+  getClientID: ({clientDid, clientThreadId}) => {
+    let url = '/getClientID';
+    return axiosClient.post(url, {clientDid, clientThreadId});
+  },
   queryTopic: ({topicNumber, clientDid, clientThreadId}) => {
     let url = '/queryTopic';
     return axiosClient.post(url, {topicNumber, clientDid, clientThreadId});
@@ -17,13 +21,17 @@ let brokerApi = {
     let url = '/editTopic';
     return axiosClient.post(url, {topicNumber, editValue, editType, clientDid, clientThreadId});
   },
+  addSubscriber: ({topicNumber, subscriberID, clientDid, clientThreadId}) => {
+    let url = '/addSubscriber';
+    return axiosClient.post(url, {topicNumber, subscriberID, clientDid, clientThreadId});
+  },
   subscribeTopic: ({topicNumber, clientDid, clientThreadId}) => {
     let url = '/subscribeTopic';
     return axiosClient.post(url, {topicNumber, clientDid, clientThreadId});
   },
-  showTopics: ({clientDid}) => {
-    let url = '/showTopics';
-    return axiosClient.post(url, {clientDid});
+  searchTopic: ({searchValue, searchType, clientDid}) => {
+    let url = '/searchTopic';
+    return axiosClient.post(url, {searchValue, searchType, clientDid});
   },
   queryMulTopics: ({queryType, clientDid, clientThreadId}) => {
     let url = '/queryMulTopics';
