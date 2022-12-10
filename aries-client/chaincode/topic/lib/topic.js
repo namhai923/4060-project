@@ -31,7 +31,6 @@ class Topic extends Contract {
       }
 
       let topic = {
-        docType: 'topic',
         topicNumber
       }
       
