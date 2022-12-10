@@ -267,7 +267,8 @@ app.post('/queryTopic', async function (req, res) {
         // check whether client is permitted to query the topic
         await brokerAgent.setCurrCredFromThread(clientThreadId)
         if (brokerAgent.checkTopics(topicNumber, false)) {
-          response = resultJSON
+          const {subscribers, ...queryDisplay} = resultJSON
+          response = queryDisplay
         }
         else {
           response = { message: 'Not permitted to query this topic' }
@@ -496,7 +497,8 @@ app.post('/queryMulTopics', async function (req, res) {
       let allRecords = []
       for (let topic of topics) {
           let record = await contract.evaluateTransaction('queryTopic', topic)
-          allRecords.push({ key: topic, record: JSON.parse(record.toString()) })
+          const {subscribers, ...queryDisplay} = JSON.parse(record.toString())
+          allRecords.push({ key: topic, record: queryDisplay })
       }
       response = allRecords
     })

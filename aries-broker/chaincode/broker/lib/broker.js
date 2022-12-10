@@ -26,7 +26,6 @@ class Broker extends Contract {
         }
 
         let topic = {
-            docType: 'topic',
             topicName,
             message,
             mode,
@@ -72,7 +71,7 @@ class Broker extends Contract {
         const topic = JSON.parse(topicAsBytes.toString());
         let subscriberList = topic.subscribers.split(',')
         subscriberList.push(subscriberID)
-        
+
         topic.subscribers = subscriberList.toString()
 
         await ctx.stub.putState(topicNumber, Buffer.from(JSON.stringify(topic))); // update topic on ledger
